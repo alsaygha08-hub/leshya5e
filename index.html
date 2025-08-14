@@ -617,5 +617,78 @@ processArray(targetFunctions);
   });
 })();
 </script>
+<style>
+  /* منع الـ overlay من تغطية الأزرار */
+  #overlay { display:none !important; pointer-events:none !important; z-index:-1 !important; }
+  /* ضمان أن الأزرار فوق أي طبقات ثانية */
+  .ctr, #butt, #butt1, #butt2, #butt3 { position:relative; z-index:10; }
+  /* تحسين اللمس في iOS */
+  * { -webkit-tap-highlight-color: transparent; }
+</style>
+
+<script>
+(function () {
+  /* إخفاء الـ overlay عند التحميل */
+  function unfreeze(){
+    var ov = document.getElementById('overlay');
+    if (ov){ ov.style.display='none'; ov.style.pointerEvents='none'; ov.style.zIndex='-1'; }
+  }
+  window.addEventListener('load', unfreeze, {once:true});
+  document.addEventListener('visibilitychange', unfreeze);
+
+  /* ربط اللمس والنقر معاً */
+  function bindTapAndClick(id, handler){
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('touchend', function(e){
+      e.preventDefault(); e.stopPropagation();
+      handler.call(el, e);
+    }, {passive:false});
+    el.addEventListener('click', function(e){
+      e.preventDefault();
+      handler.call(el, e);
+    }, false);
+  }
+
+  function wrapExisting(id, fallback){
+    var el = document.getElementById(id);
+    var old = el && el.onclick;
+    bindTapAndClick(id, function(e){
+      if (typeof old === 'function') { old.call(this, e); }
+      else if (typeof fallback === 'function') { fallback(); }
+    });
+  }
+
+  // أزرار التنقل
+  wrapExisting('butt', function(){
+    var c = document.getElementById('butt');
+    var ok = document.getElementById('butt1');
+    if (c) c.style.display='none';
+    if (ok) ok.style.display='inline-block';
+  });
+
+  wrapExisting('butt1', function(){
+    var ok = document.getElementById('butt1');
+    var next = document.getElementById('butt2');
+    if (ok) ok.style.display='none';
+    if (next){ next.textContent='Start'; next.style.display='inline-block'; }
+  });
+
+  wrapExisting('butt2');
+  wrapExisting('butt3', function(){ location.reload(); });
+
+  /* فتح الصوت في iOS */
+  function unlockAudioOnce(){
+    try{
+      var a = new Audio();
+      a.muted = true;
+      a.src = 'E3_SM3_Intro.mp3';
+      a.play().then(function(){ a.pause(); a.src=''; }).catch(function(){});
+    }catch(_){}
+    document.removeEventListener('touchend', unlockAudioOnce, true);
+  }
+  document.addEventListener('touchend', unlockAudioOnce, true);
+})();
+</script>
 </body> 
 </html>
