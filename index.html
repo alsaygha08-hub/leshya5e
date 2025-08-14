@@ -485,5 +485,137 @@ async function processArray(array) {
 // }
 processArray(targetFunctions);
 </script>
+<script>
+(function () {
+  /* ========= (1) نفس 12 سؤال دائمًا ========= */
+  const KEY = 'fixedPrompts_V1';
+  function normItem(x) {
+    if (!x) return { text: '', audio: '', image: '' };
+    const t = x.text || '';
+    let a = x.audio || '';
+    if (a && !a.endsWith('.mp3')) a = a + '.mp3';
+    const img = x.image || '';
+    return { text: t, audio: a, image: img };
+  }
+  // reset يدوي (لو تبي تبدّل المجموعة لاحقًا): ?resetFixed=1
+  if (location.search.indexOf('resetFixed=1') !== -1) {
+    try { localStorage.removeItem(KEY); } catch (e) {}
+  }
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved && Array.isArray(saved) && saved.length === 12) {
+      // استخدم نفس المجموعة المثبتة في كل مرة
+      window.prompts = saved.slice(0, 12);
+      window.processArray = function(){};  // امنع التوليد العشوائي القديم
+      window.getPrompts = undefined;
+      window.shuffle = function (a) { return a; }; // لا حاجة للشفل
+    } else {
+      // التقط أول مجموعة تظهر وخزّنها
+      const originalProcessArray = window.processArray;
+      window.processArray = function (arr) {
+        try {
+          if (Array.isArray(arr) && arr.length) {
+            const fixed = arr.slice(0, 12).map(normItem);
+            localStorage.setItem(KEY, JSON.stringify(fixed));
+          }
+        } catch (e) {}
+        if (typeof originalProcessArray === 'function') {
+          return originalProcessArray.apply(this, arguments);
+        }
+      };
+      // احتياط لو التطبيق يملأ promptBank مباشرة
+      setTimeout(function () {
+        try {
+          if (!localStorage.getItem(KEY) && Array.isArray(window.promptBank) && window.promptBank.length) {
+            const fixed = window.promptBank.slice(0, 12).map(normItem);
+            localStorage.setItem(KEY, JSON.stringify(fixed));
+          }
+        } catch (e) {}
+      }, 1200);
+      window.shuffle = function (a) { return a; };
+    }
+  } catch (e) {}
+
+  /* ========= (2) منع تداخل الصوت نهائيًا ========= */
+  // أي تشغيل لصوت يوقف كل الأصوات الأخرى تلقائيًا
+  (function enforceSingleAudioChannel(){
+    const Proto = HTMLMediaElement && HTMLMediaElement.prototype;
+    if (!Proto) return;
+    const origPlay = Proto.play;
+    const origPause = Proto.pause;
+    const all = new Set();
+
+    function pauseAllExcept(me){
+      all.forEach(a=>{
+        if (a !== me) {
+          try { a.pause(); a.currentTime = 0; } catch(_){}
+        }
+      });
+    }
+
+    // راقب كل وسائط تُنشأ أو توضع في الصفحة
+    const observer = new MutationObserver(muts=>{
+      muts.forEach(m=>{
+        m.addedNodes && m.addedNodes.forEach(node=>{
+          if (node && node.tagName && /^(AUDIO|VIDEO)$/i.test(node.tagName)) {
+            all.add(node);
+          }
+        });
+      });
+    });
+    try { observer.observe(document.documentElement, {childList:true, subtree:true}); } catch(_){}
+
+    // إضبط play/pause بحيث دايمًا قناة واحدة تشتغل
+    if (origPlay) {
+      Proto.play = function(...args){
+        all.add(this);
+        pauseAllExcept(this);
+        const p = origPlay.apply(this, args);
+        if (p && p.catch) p.catch(()=>{});
+        return p;
+      };
+    }
+    if (origPause) {
+      Proto.pause = function(...args){
+        return origPause.apply(this, args);
+      };
+    }
+  })();
+
+  /* ========= (3) زر Next يظهر/يختفي تلقائيًا ========= */
+  (function wireNextVisibility(){
+    const nextBtn = document.getElementById('butt2') || document.getElementById('btnNext');
+    if (!nextBtn) return;
+    function showNext(){ nextBtn.style.display = 'block'; }
+    function hideNext(){ nextBtn.style.display = 'none'; }
+
+    // عند بدء أي صوت → أخفِ Next، وعند انتهائه → أظهر Next
+    document.addEventListener('play', function(e){
+      if (e.target instanceof HTMLMediaElement) hideNext();
+    }, true);
+    document.addEventListener('ended', function(e){
+      if (e.target instanceof HTMLMediaElement) showNext();
+    }, true);
+
+    // لو السؤال الحالي بلا صوت، خلي Next ظاهر
+    setInterval(function(){
+      try {
+        const pb = window.promptBank || window.prompts || [];
+        const c = window.counter || 1; // بعض الأكواد تبدأ من 1
+        const idx = Math.max(0, Math.min((c-1), pb.length-1));
+        const cur = pb[idx] || {};
+        const hasAudio = !!(cur.audio);
+        if (!hasAudio) showNext();
+      } catch(_){}
+    }, 300);
+  })();
+
+  /* ========= (4) إزالة أي Overlay يمنع الضغط ========= */
+  window.addEventListener('load', function(){
+    const ov = document.getElementById('overlay');
+    if (ov) { ov.style.display = 'none'; ov.style.pointerEvents = 'none'; }
+  });
+})();
+</script>
 </body> 
 </html>
