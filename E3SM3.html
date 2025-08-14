@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+<title>English 3 Speaking Milestone 3</title>
+<!-- <script type="text/javascript" src="prompts.js"></script> -->
+<script type="text/javascript" src="https://aramco.blackboard.com/bbcswebdav/orgs/PEC/COMMON/JQUERY/jquery-3.6.4.min.js"></script>
+<script type="text/javascript" src="https://aramco.blackboard.com/bbcswebdav/orgs/PEC/COMMON/JQUERY/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://aramco.blackboard.com/bbcswebdav/orgs/PEC/COMMON/JQUERY/jquery.ui.touch-punch.min.js"></script>
+
+<style>
+.promptHolder {
+background-color: #f7f7f7;
+border: 2px solid #EBEBEB;
+color: #468283;
+font-size: calc(1.75vw + 1.75vh);
+vertical-align: middle;
+width: 90%;
+border-radius: 10px;
+margin: auto;
+font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+/* display: flex; */
+  justify-content: center;
+  align-items: center;
+  padding: 1em;
+  /* min-height: 50vh; */
+}
+#pageHead {
+	color: #468283;
+	font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
+}
+
+#closeX {
+	cursor: pointer;
+}
+#cont {
+
+	text-align: center; 
+	height: 95vh; 
+	width: 95vw; 
+	overflow: scroll; 
+	margin: auto;
+}
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.butt {
+ background-color: #84BD00;
+ color: white;
+ border-radius: 6px;
+ width: 100px;
+ left: 50%;
+ transform: translateX(-50%) translateZ(0);
+ padding: 10px;
+ text-align: center;
+ font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+ font-size: 1.5em;
+ box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+ position: fixed;
+ bottom: 20px;
+ cursor: pointer;
+}
+.pCount {
+
+width:93vw; 
+text-align: center; 
+font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; 
+
+}
+
+.zoom {
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	width: 100vw;
+	height: 100vh;
+	background-color: rgba(255,255,255, 0.9);
+	z-index: 999;
+}
+
+.butt:active {
+ 
+  transform: translateX(-50%) translateZ(0) scale(0.96);
+  /* Scaling button to 0.98 to its original size */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  /* Lowering the shadow */
+    
+}
+
+#imageHolder {
+	width: 90%; 
+	justify-content: center; 
+	cursor: pointer; 
+	display: none;
+	margin: auto;
+	overflow: visible;
+	
+}
+
+#promptPic {
+	display: block; 
+	margin-left: auto; 
+	margin-right: auto; 
+	margin-top: 10px; 
+	margin-bottom: 10px; 
+	max-width: 250px;
+	max-height: 150px; 
+	box-shadow: 0 2px 2px rgba(0,0,0,0.3);
+	cursor: pointer;
+}
+@media only screen and (max-width: 750px) {
+  .promptHolder{
+    font-size: 2em;
+	width: 85%;
+  }
+  .pCount {
+	width: 85%;
+	padding-left: 5rem;
+
+  }
+ 
+}
+
+@media only screen and (max-width: 500px) {
+  /* .promptHolder{
+    font-size: 1rem;
+	
+  } */
+  .pCount {
+	
+	padding-left: 3rem;
+
+  }
+  #promptPic {
+	max-width: 150px;
+  }
+}
+
+</style>
+<script>
+
+window.sounds = [];
+window.promptBank = [];
+window.counter = 0;
+
+const targetFunctions = [
+{
+func: "TALKING_ABOUT_RULES",
+subs: ["TRY_IT_1", "TRY_IT_2"],
+},
+{
+func: "MAKING_ACCEPTING_AND_REFUSING_OFFERS", 
+subs: ["TRY_IT_1", "TRY_IT_2"],
+},
+{
+func: "TALKING_ABOUT_WILLINGNESS", 
+subs: ["TRY_IT_1", "TRY_IT_2"]
+},
+{
+func: "INVITING_AND_HANDLING_QUESTIONS", 
+subs: ["TRY_IT_1"]
+},
+{
+func: "ASKING_FOR_OFFERING_AND_PROVIDING_CLARIFICATION", 
+subs: ["TRY_IT_1", "TRY_IT_2"]
+},
+{
+func: "TALKING_ABOUT_REQUIREMENTS_AND_NECESSITIES",
+subs: ["TRY_IT_1", "TRY_IT_2"]
+},
+{
+func: "TALKING_ABOUT_MISTAKES",
+subs: ["TRY_IT_1"]
+},
+{
+func: "TALKING_ABOUT_ABBREVIATIONS",
+subs: ["TRY_IT_1", "TRY_IT_2"]
+},
+{
+func: "ASSIGNING_TASKS",
+subs: ["TRY_IT_1", "TRY_IT_2"]
+},
+{
+func: "TALKING_ABOUT_ROLES_AND_RESPONSIBILITIES",
+subs: ["TRY_IT_1", "TRY_IT_2"]
+},
+{
+func: "TALKING_ABOUT_PURPOSE_AND_FUNCTION",
+subs: ["TRY_IT_1", "TRY_IT_2"]
+},
+{
+func: "TALKING_ABOUT_RANGE_AND_DURATION",
+subs: ["TRY_IT_1", "TRY_IT_2"]
+}
+];
+
+
+
+const resources_bb_url = "https://aramco.blackboard.com/bbcswebdav/orgs/PEC/COMMON/TRY_IT/E3M/";   
+   
+    window.shuffle =  function(array) {
+			var currentIndex = array.length, temporaryValue, randomIndex;
+    		while (0 !== currentIndex) {
+        		randomIndex = Math.floor(Math.random() * currentIndex);
+        		currentIndex -= 1;
+        		temporaryValue = array[currentIndex];
+        		array[currentIndex] = array[randomIndex];
+        		array[randomIndex] = temporaryValue;
+    		}	
+    		return array;
+		};
+		window.introPage = function(){
+		$("#butt").hide();
+		$("#promptHolder").html(`<h2 class="iHead" style="font-size: 2rem">English 3 Speaking Milestone 3</h2> <div class="iText" style="font-size: 1.5rem; font-weight: 500; margin-top:8vh"> <p style="line-height: 2rem; display: block;">Please say your name and badge number.</p><p> Tap OK to proceed.</p></div>`);
+		
+		$("#butt1").fadeIn(500);
+		badge.play();
+		
+
+  }
+ 
+  window.landingPage = function(){
+	    badge.pause();
+		$("#butt1").hide();
+		$("#promptHolder").html(`<h2 class="iHead" style="font-size: 2rem">English 3 Speaking Milestone 3</h2> <div class="iText" style="font-size: 1.5rem; font-weight: 500; margin-top:8vh; line-height: 1.5rem"> <p>You will see and hear 12 random prompts from modules 17 to 28 of this course. </p><p>After you hear each prompt, you should respond.</p><p>If you see a picture with your prompt, you can tap the picture to make it bigger.</p><p>After you respond, tap the “Next” button to move to the next prompt.</p><p>When you are ready, tap the “Start” button to begin.</p></div>`);
+		
+		$("#butt2").fadeIn(500);
+		instr.play();
+		
+
+  }
+  window.startActivity = function(){
+	instr.pause();
+	$("#butt2").hide();
+	$("#pageHead").show();
+    $("#butt2").text("Next");
+	document.getElementById('image_holder').style.display = "none";
+    counter++;
+	
+	if(counter>promptBank.length){
+		// audioElements[counter-1].pause();
+	  $("#promptHolder").text("You have finished.");
+	//   parent.contentApi.setData('contentComplete', true);
+	  $("#pCount").hide();
+	 //document.getElementById("promptHolder").style.color = "green";
+	  $("#butt2").hide();
+	  $("#butt3").fadeIn();
+	  endBlurb.play();
+
+	}else{
+	$("#pCount").show();
+	$("#promptHolder").text(promptBank[counter-1].text);
+	// tgtPhrase.src = prompts[counter-1].audio+".mp3";
+    audioElements[counter-1].play();
+	$("#pno").text(counter+" / ")
+	if(promptBank[counter-1].image && promptBank[counter-1].image.length > 0){
+		document.getElementById('image_holder').style.display = "block";
+		document.getElementById('promptPic').src = promptBank[counter-1].image;
+	}
+	}
+
+  }
+  window.enlarge = function(){
+	  var tgtImg = document.getElementById('promptPic');
+	  var imgHolder = document.getElementById('image_holder');
+	$("#image_holder").addClass('zoom');
+	tgtImg.style.maxWidth = "80vw";
+	tgtImg.style.maxHeight = "75vh";
+	document.getElementById('cap').style.backgroundColor = "white";
+	document.getElementById('cap').style.fontSize = "1.25rem";
+	document.getElementById('cap').innerText = document.getElementById('promptHolder').innerText;
+	document.getElementById('closeX').style.display = "block";
+  }
+
+  window.closeImg = function(){
+	$("#cap").text("Tap to enlarge");
+
+	document.getElementById('cap').style.fontSize = "1rem";
+	$('#image_holder').removeClass('zoom');
+	document.getElementById('promptPic').style.maxWidth = "250px";
+	document.getElementById('closeX').style.display = "none";
+
+	
+  }
+
+  window.startOver = function(){
+	location.reload();
+  }
+  //once the array of target folders is created this function will randomly select TRY_IT_1 or TRY_IT_2 in each folder and get the prompts.js files from it
+  function getPrompts(item) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        var func = item.func;
+        var sub = 0; // Default to 0 if subs length is 1 or less
+		//if there's more than 1 subfolder (eg, TRY_IT_1 and TRY_IT_2), randomly choose one of the two folders
+        if (item.subs.length > 1) {
+            sub = Math.floor(Math.random() * item.subs.length);
+        }
+        var subfolder = item.subs[sub];
+
+        script.src = resources_bb_url + func + "/" + subfolder + "/prompts.js";
+
+		//this will be added to the values of the audio and image keys in the prompts:
+		var res_folder = resources_bb_url + func + "/" + subfolder + "/";
+        // Script loading successfully
+        script.onload = () => {
+            // Assuming 'prompts' is globally accessible after the script is loaded
+            const loadedPrompts = window.prompts; // Capture 'prompts' from the current script
+
+			//change the path for the audio and image files in the prompts objects:
+			for(var p=0;p<loadedPrompts.length; p++){
+				var oa = loadedPrompts[p].audio;
+				loadedPrompts[p].audio = res_folder+oa;
+				if("image" in loadedPrompts[p] && loadedPrompts[p].image != ""){
+				var oi = loadedPrompts[p].image;
+				loadedPrompts[p].image = res_folder+oi;
+				}
+				
+			}
+            resolve(loadedPrompts); // Resolve the promise with the loaded prompts
+        };
+
+        // Script loading failed
+        script.onerror = () => {
+            reject(new Error(`Script load error for ${script.src}`));
+        };
+
+        document.head.appendChild(script);
+    });
+}
+
+//this function is called on the targetFunctions array to create an array with all the prompts from the target functions
+async function processArray(array) {
+    const allPrompts = [];
+    
+   
+
+    const promises = array.map(item => getPrompts(item)); // Create an array of promises
+
+    try {
+        const results = await Promise.all(promises); // Wait for all promises to resolve
+        results.forEach(itemPrompts => {
+			shuffle(itemPrompts);
+            promptBank.push(itemPrompts[0]);
+			
+          
+        });
+		
+        // Create audio elements for each sound file
+      
+		shuffle(promptBank);
+		for(var s = 0; s<promptBank.length; s++){
+			sounds.push(promptBank[s].audio + ".mp3");
+		}
+		window.audioElements = sounds.map(file => {
+  const audio = new Audio(file);
+  
+  audio.onended = function () { // when prompt audio finishes 
+			$('#butt2').fadeIn(); // show the next button
+	}
+  return audio;
+});
+        // Hide the overlay here, since all prompts are loaded
+        document.getElementById('overlay').style.display = "none";
+
+        // Console log promptBank here, to ensure it's done only once
+       
+		$("#pCount").hide();
+	$("#pto").text(promptBank.length);
+    } catch (error) {
+        console.error("Error loading scripts:", error);
+    }
+}
+
+
+
+
+
+</script>
+</head>
+<body>
+	<div id="overlay">
+        <img src="loading.gif" alt="Loading" id="loading-image">
+    </div>
+<div id="cont">
+	<h1 id="pageHead" style="display: none;">English 3 Speaking Milestone 3</h1>
+	<div id="pCount" class="pCount"><div style="margin-left: auto; margin-right: 0; margin-bottom: 5px; width: 75px; padding: 5px;  border-radius: 7px;"><span id="pno" style="font-size: 1.25em"></span><span id="pto"></span></div></div>
+	<div class="promptHolder" id="promptHolder"><h2 class="iHead" style="font-size: 2rem; margin: 0 0 1.5rem 0">English 3 Speaking Milestone 3</h2> <div class="iText" style="font-size: 1.5rem; font-weight: 500; margin-top: 0.5rem"> <span style="font-weight: bold">This assessment covers these functions:</span></div>
+	<div class="iText" style="display:flex; justify-content: center; margin-left: auto; font-size: 1.5rem;"><ul style="text-align: left;">
+		<li>Talking about rules</li>
+		<li>Making, accepting, and refusing offers </li>
+		<li>Talking about willingness</li>
+		<li>Inviting and handling questions</li>
+		<li>Asking for, offering, and providing clarification</li>
+		<li>Talking about requirements</li>
+		<li>Talking about mistakes</li>
+		<li>Talking about abbreviations</li>
+		<li>Assigning tasks</li>
+		<li>Talking about responsibilities</li>
+		<li>Talking about purpose and function</li>
+		<li>Talking about range and duration</li>
+	</ul></div>
+<!-- <div style="font-size: 1.5rem; line-height: 2rem; margin-top: 1rem;">•<span style="margin-left: 5px;">Talking about summarizing</span><br/>•<span style="margin-left: 5px;">Clearing up misunderstandings</span><br/>•<span style="margin-left: 5px;">Talking about feasibility</span><br/>•<span style="margin-left: 5px;">Talking about inclusion and exceptions</span><br/>•<span style="margin-left: 5px;">Qualifying a statement</span><br/>•<span style="margin-left: 5px;">Talking about limitations constraints, and parameters</span><br/></div> -->
+</div>
+
+<div id="image_holder" style="display:none">
+	<span id="closeX" style="text-align: center; position: absolute; right: 2%; font-family: arial; font-weight: bold; display: none; background-color: black; border-radius: 20px; padding: 5px; width: 20px; color: white;" onclick="closeImg()">X</span>
+
+	<img id='promptPic' src="" onclick="enlarge()">
+	<p id="cap" style="text-align: center; font-family: 'Trebuchet MS'">Tap to enlarge</p>
+</div>
+
+<div>
+<div style="margin-top: 2em">
+  <div class="butt" id="butt" onclick="introPage()">Continue</div>
+  <div class="butt" id="butt1" style="display: none;" onclick="landingPage()">OK</div>
+  <div class="butt" id="butt2" style="display: none;" onclick="startActivity()">Start</div>
+  <div class="butt" id="butt3" style="display: none" onclick="startOver();">Restart</div>
+</div>
+</div>
+<script>
+	window.endBlurb = document.createElement("AUDIO");
+	endBlurb.src = "E3_E4_End.mp3"
+	window.badge = document.createElement("AUDIO");
+	badge.src = "E3_SM3_Intro.mp3";
+	window.instr = document.createElement("AUDIO");
+	instr.src = "E3_4_SM3_Inst.mp3";
+
+    window.tgtPhrase = document.createElement("AUDIO");
+	tgtPhrase.onended = function () { // when prompt audio finishes 
+			$('#butt2').fadeIn(); // show the next button
+	}
+	//TO TEST, UNHIDE THIS BIT OF CODE AND HIDE LINES 748 - 753; ALSO COMMENT OUT THE HIDE BUTTON LINE IN THE START ACTIVITY FUNCTION (LINE 645 )
+	// for(var p=0; p<promptB.length; p++){
+	// 	var d = Object.keys(promptB[p]);
+	// 	for(var c = 0; c< promptB[p][d].length; c++)
+	// 	prompts.push(promptB[p][d][c]);
+		
+	// }
+	
+
+
+
+// for(var x=0; x<targetFunctions.length; x++){
+// 	var func = targetFunctions[x].func;
+// 	if(targetFunctions[x].subs.length>1){
+// 		var sub = Math.floor(Math.random() * targetFunctions[x].subs.length);
+// 		console.log("sub", sub);
+// 	}
+
+	// window['prompts'+x] = prompts;
+    // shuffle(prompts);
+    // var af = prompts[x].audio;
+    // prompts[x].audio = filePath+targetFunctions[x]+af;
+    // promptBank.push(prompts[x]);
+    // var s = document.getElementById("script"+x);
+    // document.head.removeChild(s);
+
+	// for(var p=0; p<promptB.length; p++){
+	// 	var d = Object.keys(promptB[p]);
+	// 	shuffle(promptB[p][d]);
+	// 	prompts.push(promptB[p][d][0]);
+		
+	// }
+
+
+
+
+
+// for(var f=0; f<targetFunctions.length; f++){
+
+// 	var func = targetFunctions[f];
+// 	var functionFolder = resources_bb_url+func+"/"
+// 	baseUrls.push(functionFolder);
+// }
+processArray(targetFunctions);
+</script>
+</body> 
+</html>
