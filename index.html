@@ -690,5 +690,179 @@ processArray(targetFunctions);
   document.addEventListener('touchend', unlockAudioOnce, true);
 })();
 </script>
+<script>
+(function(){
+  /* ========= 0) تجهيز عام ========= */
+  // أخفِ أي overlay لو كان يغطي
+  function hideOverlay(){
+    var ov=document.getElementById('overlay');
+    if(ov){ ov.style.display='none'; ov.style.pointerEvents='none'; ov.style.zIndex='-1'; }
+  }
+  hideOverlay();
+  window.addEventListener('load', hideOverlay, {once:true});
+
+  // التعرّف على العناصر
+  var btnNext = document.getElementById('butt2') || document.getElementById('btnNext') || document.getElementById('nextBtn');
+  var btnContinue = document.getElementById('butt') || document.getElementById('btnContinue');
+  var btnOK = document.getElementById('butt1') || document.getElementById('btnOk');
+  var btnRestart = document.getElementById('butt3') || document.getElementById('btnRestart');
+  var pageHead = document.getElementById('pageHead');
+  var promptHolder = document.getElementById('promptHolder');
+  var imageHolder = document.getElementById('image_holder');
+  var promptPic = document.getElementById('promptPic');
+  var pno = document.getElementById('pno');
+  var pto = document.getElementById('pto');
+
+  if(!btnNext){ return; } // زر التالي ضروري
+
+  /* ========= 1) بنية الأسئلة (12 ثابتة) ========= */
+  // نستخدم المجموعة المثبتة إن وجدت، وإلا نأخذ من window.prompts/window.promptBank
+  function norm(item){
+    if(!item) return {text:'',audio:'',image:''};
+    var a = item.audio || '';
+    if(a && !a.endsWith('.mp3')) a = a + '.mp3';
+    return { text: item.text || '', audio: a, image: item.image || '' };
+  }
+  var fixed = null;
+  try{ fixed = JSON.parse(localStorage.getItem('fixedPrompts_V1')||'null'); }catch(_){}
+  var bank = [];
+  if (fixed && Array.isArray(fixed) && fixed.length === 12) {
+    bank = fixed.map(norm);
+  } else if (Array.isArray(window.prompts) && window.prompts.length){
+    bank = window.prompts.slice(0,12).map(norm);
+  } else if (Array.isArray(window.promptBank) && window.promptBank.length){
+    bank = window.promptBank.slice(0,12).map(norm);
+  }
+  // خزّنها لو لسا ما تخزنت
+  try{
+    if(!fixed && bank.length===12){
+      localStorage.setItem('fixedPrompts_V1', JSON.stringify(bank));
+    }
+  }catch(_){}
+
+  if(pto) pto.textContent = bank.length || 12;
+
+  /* ========= 2) قناة صوت واحدة + منع التداخل ========= */
+  var audio = new Audio();
+  audio.preload = 'auto';
+  audio.playsInline = true;
+
+  // أي تشغيل جديد يوقف الصوت السابق
+  function playFile(src){
+    try{ audio.pause(); audio.currentTime = 0; }catch(_){}
+    if(src){
+      audio.src = src;
+      var p = audio.play();
+      if(p && p.catch) p.catch(function(){ /* iOS قد يحتاج لمس */ });
+    }
+  }
+  audio.onended = function(){
+    // اعرض Next بعد انتهاء الصوت
+    if(btnNext) btnNext.style.display = 'inline-block';
+  };
+
+  /* ========= 3) العداد والتسلسل المنضبط ========= */
+  var idx = 0;                // يبدأ من 0
+  var busy = false;           // يمنع الدبل-كلك
+  var started = false;        // تحكم في وضع Start/Next
+
+  function show(i){
+    if (!bank[i]) return;
+    hideOverlay();
+    if(pageHead) pageHead.style.display = 'block';
+    if(promptHolder) promptHolder.textContent = bank[i].text || '';
+    if (bank[i].image){
+      if(imageHolder) imageHolder.style.display = 'block';
+      if(promptPic) promptPic.src = bank[i].image;
+    } else {
+      if(imageHolder) imageHolder.style.display = 'none';
+    }
+    if(pno) pno.textContent = String(i+1);
+
+    // اخفِ الزر أثناء التشغيل
+    if(btnNext) btnNext.style.display = 'none';
+
+    // شغّل الصوت إن وجد، وإلا أظهر Next فورًا
+    if (bank[i].audio){
+      playFile(bank[i].audio);
+    } else {
+      if(btnNext) btnNext.style.display = 'inline-block';
+    }
+  }
+
+  /* ========= 4) إزالة كل مستمعين قدامى لزر Next واستبدالهم ========= */
+  // أسهل طريقة: استبدال العقدة نفسها بنسخة نظيفة (يشيل أي listeners قديمة)
+  var freshNext = btnNext.cloneNode(true);
+  btnNext.parentNode.replaceChild(freshNext, btnNext);
+  btnNext = freshNext;
+
+  // اربط touchend + click مع إيقاف أي handlers قديمة
+  function nextHandler(e){
+    e.preventDefault(); e.stopPropagation();
+    if(busy) return;
+    busy = true;
+    setTimeout(function(){ busy = false; }, 300); // debounce بسيط
+
+    if(!started){
+      // أول ضغطة = Start
+      started = true;
+      show(0);
+      idx = 1; // بعد عرض 0، يصبح التالي هو 1
+      return;
+    }
+
+    // لو انتهينا
+    if (idx >= bank.length){
+      if(promptHolder) promptHolder.textContent = 'You have finished.';
+      if(btnNext) btnNext.style.display = 'none';
+      if(btnRestart) btnRestart.style.display = 'inline-block';
+      return;
+    }
+
+    // اعرض السؤال الحالي ثم زِد
+    show(idx);
+    idx++;
+  }
+
+  btnNext.addEventListener('touchend', nextHandler, {passive:false});
+  btnNext.addEventListener('click', nextHandler, false);
+
+  /* ========= 5) ربط بقية الأزرار بخفة بدون تضارب ========= */
+  function bindTap(el, handler){
+    if(!el) return;
+    var clean = el.cloneNode(true);
+    el.parentNode.replaceChild(clean, el);
+    clean.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); handler(); }, {passive:false});
+    clean.addEventListener('click', function(e){ e.preventDefault(); handler(); }, false);
+    return clean;
+  }
+
+  if(btnContinue){
+    btnContinue = bindTap(btnContinue, function(){
+      btnContinue.style.display='none';
+      if(btnOK) btnOK.style.display='inline-block';
+    });
+  }
+  if(btnOK){
+    btnOK = bindTap(btnOK, function(){
+      btnOK.style.display='none';
+      if(btnNext){ btnNext.textContent='Start'; btnNext.style.display='inline-block'; }
+    });
+  }
+  if(btnRestart){
+    btnRestart = bindTap(btnRestart, function(){ location.reload(); });
+  }
+
+  /* ========= 6) iOS: فتح الصوت بلمسة ========= */
+  function unlockAudioOnce(){
+    try{
+      var a=new Audio(); a.muted=true; a.src='E3_SM3_Intro.mp3';
+      a.play().then(function(){ a.pause(); a.src=''; }).catch(function(){});
+    }catch(_){}
+    document.removeEventListener('touchend', unlockAudioOnce, true);
+  }
+  document.addEventListener('touchend', unlockAudioOnce, true);
+})();
+</script>
 </body> 
 </html>
