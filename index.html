@@ -11,6 +11,47 @@
 
   <!-- ربط قائمة الأسئلة الثابتة -->
   <script src="prompts.js"></script>
+<script>
+/* === ثابت: استخدم 12 من prompts.js، بدون شَفل، وصوت واحد لكل مرة === */
+(function(){
+  window.shuffle = function(a){ return a; };       // عطّل أي شَفل
+  window.promptBank = Array.isArray(window.prompts) ? window.prompts.slice(0,12) : [];
+
+  // عدّاد أعلى يمين
+  var pto = document.getElementById('pto'); if (pto) pto.textContent = String(window.promptBank.length);
+
+  // قناة صوت واحدة (لا تداخل)
+  var single = new Audio(); single.preload='auto'; single.playsInline = true;
+
+  window.audioElements = window.promptBank.map(function(p){
+    var file = p.audio || '';
+    if (file && !/\.mp3$/i.test(file)) file += '.mp3'; // ضمان الامتداد
+    return {
+      play: function(){
+        try{ single.pause(); single.currentTime = 0; }catch(_){}
+        if (file){
+          single.src = file;
+          var pr = single.play(); if (pr && pr.catch) pr.catch(function(){});
+        } else {
+          // سؤال بلا صوت → أظهر Next فوراً
+          var b = document.getElementById('butt2'); if (b) b.style.display = 'block';
+          try{ $('#butt2').fadeIn(); }catch(_){}
+        }
+      },
+      pause: function(){ try{ single.pause(); }catch(_){ } }
+    };
+  });
+
+  single.onended = function(){
+    var b = document.getElementById('butt2'); if (b) b.style.display = 'block';
+    try{ $('#butt2').fadeIn(); }catch(_){}
+  };
+
+  // أخفِ الـ overlay لو ظاهر
+  var ov = document.getElementById('overlay');
+  if (ov){ ov.style.display='none'; ov.style.pointerEvents='none'; ov.style.zIndex='-1'; }
+})();
+</script>
 
   <style>
     .promptHolder{background:#f7f7f7;border:2px solid #EBEBEB;color:#468283;font-size:calc(1.75vw + 1.75vh);width:90%;border-radius:10px;margin:auto;font-family:'Trebuchet MS','Lucida Sans Unicode','Lucida Grande','Lucida Sans',Arial,sans-serif;justify-content:center;align-items:center;padding:1em;}
