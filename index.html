@@ -5,34 +5,52 @@
   <title>English 3 Speaking Milestone 3</title>
   <base href="/leshya5e/">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1f2937">
 
   <style>
-    :root { --brand:#468283; --accent:#84BD00; }
-    body{margin:0;background:#f9fafb;font-family:system-ui,-apple-system,Segoe UI,Roboto}
-    #overlay{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:9999;pointer-events:none}
-    .wrap{max-width:900px;margin:24px auto;padding:12px}
+    :root { --brand:#468283; --accent:#84BD00; --bg:#f9fafb; }
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto}
+    #overlay{
+      position:fixed; inset:0; background:#fff;
+      display:flex; align-items:center; justify-content:center;
+      z-index:9999; pointer-events:none; font-weight:600; color:#333
+    }
+    .wrap{max-width:900px;margin:24px auto;padding:16px}
     h1{color:var(--brand);margin:0 0 12px 0}
-    .prompt{background:#f7f7f7;border:2px solid #EBEBEB;color:var(--brand);border-radius:10px;padding:16px;font-size:22px;min-height:120px}
-    .ctr{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:24px}
-    .btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:12px 22px;font-size:18px;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.2)}
+    .prompt{
+      background:#f7f7f7; border:2px solid #EBEBEB;
+      color:#0f172a; border-radius:12px; padding:18px;
+      font-size:20px; line-height:1.5; min-height:120px
+    }
+    .ctr{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:22px;flex-wrap:wrap}
+    .btn{
+      background:var(--accent); color:#fff; border:none; border-radius:10px;
+      padding:12px 22px; font-size:18px; cursor:pointer;
+      box-shadow:0 2px 6px rgba(0,0,0,.15)
+    }
     .btn:active{transform:scale(.98)}
-    #image_holder{display:none;text-align:center;margin-top:10px}
-    #image_holder img{max-width:280px;max-height:180px;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,.2)}
-    .count{margin-top:8px;color:#111}
+    #image_holder{display:none;text-align:center;margin-top:12px}
+    #image_holder img{
+      max-width:280px; max-height:180px; border-radius:10px;
+      box-shadow:0 2px 6px rgba(0,0,0,.2)
+    }
+    .count{margin:10px 0 14px;color:#111;font-weight:600}
+    .count .sep{opacity:.5}
   </style>
 </head>
 <body>
-  <div id="overlay"><div>Loading…</div></div>
+  <div id="overlay">Loading…</div>
 
   <div class="wrap">
     <h1 id="pageHead" style="display:none">English 3 Speaking Milestone 3</h1>
 
-    <div id="pCount" class="count"><span id="pno"></span><span id="pto"></span></div>
+    <div id="pCount" class="count">
+      <span id="pno">0</span><span class="sep">/</span><span id="pto">12</span>
+    </div>
 
     <div id="promptHolder" class="prompt">
-      <h2 style="margin:0 0 8px 0;color:var(--brand)">English 3 Speaking Milestone 3</h2>
+      <h2 style="margin:0 0 8px 0;color:#0f172a">English 3 Speaking Milestone 3</h2>
       <div>This assessment includes 12 fixed prompts (one per function). Press Continue to begin.</div>
     </div>
 
@@ -41,23 +59,60 @@
     </div>
 
     <div class="ctr">
-      <button class="btn" id="butt">Continue</button>
-      <button class="btn" id="butt1" style="display:none">OK</button>
-      <button class="btn" id="butt2" style="display:none">Start</button>
-      <button class="btn" id="butt3" style="display:none">Restart</button>
+      <button class="btn" id="btnContinue">Continue</button>
+      <button class="btn" id="btnOk" style="display:none">OK</button>
+      <button class="btn" id="btnNext" style="display:none">Start</button>
+      <button class="btn" id="btnRestart" style="display:none">Restart</button>
     </div>
   </div>
 
+  <!-- قناة صوت واحدة فقط لتجنب أي تداخل -->
   <audio id="player" preload="auto" playsinline></audio>
-  <script src="prompts.js"></script>
 
   <script>
     // أخفي طبقة التحميل بمجرد تحميل الصفحة
-    window.addEventListener('load', function(){ const ov=document.getElementById('overlay'); if(ov) ov.style.display='none'; });
+    window.addEventListener('load', function(){
+      const ov=document.getElementById('overlay'); if(ov) ov.style.display='none';
+    });
 
-    // حالة التطبيق
-    const promptBank = Array.isArray(window.prompts) ? window.prompts.slice(0,12) : [];
-    let idx = 0;
+    // 12 سؤال ثابتة — نفس الترتيب دائمًا (آخر سؤالين بدون صوت مؤقتًا)
+    const PROMPTS = [
+      // 1) TALKING_ABOUT_RULES
+      { text: "Company rules: Tell a new trainee three safety rules they must follow during loading operations.", audio: "g1.mp3",  image: "" },
+
+      // 2) MAKING, ACCEPTING, AND REFUSING OFFERS
+      { text: "Your co-worker offers to help you finish a task. Make an offer back, accept one offer, and politely refuse another.", audio: "g2.mp3", image: "" },
+
+      // 3) TALKING ABOUT WILLINGNESS
+      { text: "Your supervisor asks who is willing to cover a night shift. Say if you are willing and explain why or why not.", audio: "g3.mp3", image: "" },
+
+      // 4) INVITING AND HANDLING QUESTIONS
+      { text: "You give a short update to your team. Invite questions and handle one follow-up question.", audio: "g4.mp3", image: "" },
+
+      // 5) ASKING FOR, OFFERING, AND PROVIDING CLARIFICATION
+      { text: "A colleague didn’t understand a procedure. Ask for clarification, offer clarification, and then provide a clear explanation.", audio: "g5.mp3", image: "" },
+
+      // 6) REQUIREMENTS & NECESSITIES
+      { text: "Explain the required PPE and documents needed before starting a loading job.", audio: "g6.mp3", image: "" },
+
+      // 7) MISTAKES
+      { text: "Describe a small mistake at work and explain how to correct it and avoid it next time.", audio: "g7.mp3", image: "" },
+
+      // 8) ABBREVIATIONS
+      { text: "Explain three common abbreviations at work (e.g., PPE, SOP, QA) and what they mean.", audio: "g8.mp3", image: "" },
+
+      // 9) ASSIGNING TASKS
+      { text: "Assign three tasks to your team for today’s shift. Use clear instructions and deadlines.", audio: "g9.mp3", image: "" },
+
+      // 10) ROLES & RESPONSIBILITIES
+      { text: "Explain your role and two responsibilities of your team members on today’s shift.", audio: "g10.mp3", image: "" },
+
+      // 11) PURPOSE & FUNCTION  (بدون صوت مؤقتًا)
+      { text: "Explain the purpose and function of a specific tool or valve used in loading.", audio: "", image: "" },
+
+      // 12) RANGE & DURATION   (بدون صوت مؤقتًا)
+      { text: "Talk about the duration of a maintenance task and a meeting today. Give specific times.", audio: "", image: "" }
+    ];
 
     // عناصر DOM
     const pageHead = document.getElementById('pageHead');
@@ -66,17 +121,17 @@
     const promptPic    = document.getElementById('promptPic');
     const pno = document.getElementById('pno');
     const pto = document.getElementById('pto');
-    const btnContinue = document.getElementById('butt');
-    const btnOK = document.getElementById('butt1');
-    const btnNext = document.getElementById('butt2');
-    const btnRestart = document.getElementById('butt3');
-    const audio = document.getElementById('player');
+    const btnContinue = document.getElementById('btnContinue');
+    const btnOk       = document.getElementById('btnOk');
+    const btnNext     = document.getElementById('btnNext');
+    const btnRestart  = document.getElementById('btnRestart');
+    const audioEl     = document.getElementById('player');
 
-    // عداد الإجمالي
-    pto.textContent = promptBank.length ? "12" : "0";
+    let idx = 0;
+    pto.textContent = String(PROMPTS.length);
 
     function render(i){
-      const p = promptBank[i];
+      const p = PROMPTS[i];
       if(!p) return;
 
       pageHead.style.display = 'block';
@@ -89,43 +144,48 @@
         imageHolder.style.display = 'none';
       }
 
-      pno.textContent = (i+1) + " / ";
-      btnNext.style.display = 'none'; // نخفي "Next" حتى ينتهي الصوت
+      pno.textContent = String(i+1);
+      btnNext.style.display = 'none'; // لا يظهر Next إلا بعد انتهاء الصوت (إن وُجد)
 
-      // تشغيل صوت واحد فقط بلا تداخل
-      audio.pause(); audio.currentTime = 0;
-      if(p.audio){ // إذا فيه ملف صوت
-        audio.src = p.audio;
-        audio.play().catch(()=>{ /* لو سفاري رفض، المستخدم يضغط Next يدوي */ btnNext.style.display = 'block'; });
-      }else{
-        // لا يوجد صوت لهذا السؤال → أظهر Next مباشرة
-        btnNext.style.display = 'block';
+      // تشغيل صوت واحد فقط بلا أي تداخل
+      try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+      if (p.audio) {
+        audioEl.src = p.audio;           // g1.mp3 ... g10.mp3
+        const pr = audioEl.play();
+        if (pr && typeof pr.then === 'function') {
+          pr.catch(()=>{ btnNext.style.display = 'inline-block'; });
+        }
+      } else {
+        // لا يوجد صوت لهذا السؤال → أظهر Next فورًا
+        btnNext.style.display = 'inline-block';
       }
 
-      btnNext.textContent = (i === promptBank.length - 1) ? "Finish" : "Next";
+      btnNext.textContent = (i === PROMPTS.length - 1) ? 'Finish' : 'Next';
     }
 
-    audio.onended = () => { btnNext.style.display = 'block'; };
+    audioEl.onended = () => { btnNext.style.display = 'inline-block'; };
 
     // تدفّق الأزرار
     btnContinue.onclick = () => {
       btnContinue.style.display='none';
       promptHolder.innerHTML = '<p>Please say your name and badge number.</p><p>Tap OK to proceed.</p>';
-      btnOK.style.display='inline-block';
+      btnOk.style.display='inline-block';
     };
-    btnOK.onclick = () => {
-      btnOK.style.display='none';
+
+    btnOk.onclick = () => {
+      btnOk.style.display='none';
       promptHolder.innerHTML = '<p>You will answer 12 fixed prompts (one for each function).</p><p>After you hear each prompt, respond, then tap “Next”.</p>';
       btnNext.textContent='Start';
       btnNext.style.display='inline-block';
     };
+
     btnNext.onclick = () => {
       if (btnNext.textContent === 'Start') {
         render(idx);
         idx++;
         return;
       }
-      if (idx >= promptBank.length){
+      if (idx >= PROMPTS.length){
         promptHolder.textContent = 'You have finished.';
         btnNext.style.display='none';
         btnRestart.style.display='inline-block';
@@ -134,9 +194,10 @@
       render(idx);
       idx++;
     };
+
     btnRestart.onclick = () => location.reload();
 
-    // تسجيل Service Worker للمسار الفرعي
+    // تسجيل Service Worker للمسار الفرعي (لو sw.js موجود عندك)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/leshya5e/sw.js').catch(()=>{});
     }
