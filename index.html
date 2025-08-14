@@ -387,7 +387,8 @@ async function processArray(array) {
 
 
 </script>
-</head>
+</head><script src="prompts.js"></script>
+
 <body>
 	<div id="overlay">
         <img src="loading.gif" alt="Loading" id="loading-image">
@@ -483,7 +484,51 @@ async function processArray(array) {
 // 	var functionFolder = resources_bb_url+func+"/"
 // 	baseUrls.push(functionFolder);
 // }
-processArray(targetFunctions);
+//processArray(targetFunctions);
+	<script>
+/* استخدم الـ 12 سؤال من prompts.js كما هي، بدون عشوائية */
+(function(){
+  // لو فيه دالة shuffle قديمة عطّلها
+  window.shuffle = function(a){ return a; };
+
+  // جهّز بنك الأسئلة
+  window.promptBank = (Array.isArray(window.prompts) ? window.prompts.slice(0,12) : []);
+
+  // ابنِ عناصر الصوت (قناة واحدة لكل مرة تشغيل)
+  var single = new Audio(); single.preload='auto'; single.playsInline = true;
+
+  window.sounds = window.promptBank.map(function(p){
+    var a = p.audio || ""; 
+    return a && !/\.mp3$/i.test(a) ? (a + ".mp3") : a;
+  });
+
+  window.audioElements = window.sounds.map(function(file){
+    return {
+      play: function(){
+        try { single.pause(); single.currentTime = 0; } catch(_){}
+        if (file){
+          single.src = file;
+          var pr = single.play(); if (pr && pr.catch) pr.catch(function(){});
+        } else {
+          // سؤال بلا صوت → أظهر زر Next فورًا
+          try { $('#butt2').fadeIn(); } catch(_){ var b=document.getElementById('butt2'); if(b) b.style.display='block'; }
+        }
+      },
+      pause: function(){ try{ single.pause(); }catch(_){} }
+    };
+  });
+
+  single.onended = function(){
+    try { $('#butt2').fadeIn(); } catch(_){ var b=document.getElementById('butt2'); if(b) b.style.display='block'; }
+  };
+
+  // حدّث العداد وأخفِ شاشة التحميل
+  try { document.getElementById('pto').textContent = String(window.promptBank.length); } catch(_){}
+  try { $('#pCount').hide(); } catch(_){}
+  var ov=document.getElementById('overlay'); if(ov){ ov.style.display='none'; ov.style.pointerEvents='none'; ov.style.zIndex='-1'; }
+})();
+</script>
+
 </script>
 </body> 
 </html>
