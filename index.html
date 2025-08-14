@@ -240,5 +240,106 @@
     setTimeout(function(){ var ov=document.getElementById('overlay'); if(ov){ ov.style.display='none'; ov.style.pointerEvents='none'; ov.style.zIndex='-1'; } }, 8000);
   })();
   </script>
+<script>
+/* ===== Force 1:1 question↔audio mapping + single audio channel ===== */
+(function(){
+  // 0) خذ الـ 12 سؤال من prompts.js كما هي
+  var bank = Array.isArray(window.prompts) ? window.prompts.slice(0,12) : [];
+  window.promptBank = bank;
+
+  // 1) ألغِ أي مصفوفات/تعريفات قديمة قد تخلط الأصوات
+  try{ window.sounds = []; }catch(_){}
+  try{ window.audioElements = []; }catch(_){}
+  try{ window.shuffle = function(a){ return a; }; }catch(_){}
+
+  // 2) قناة صوت واحدة فقط
+  var player = new Audio();
+  player.preload = 'auto';
+  player.playsInline = true;
+
+  function showNext(){
+    var b = document.getElementById('butt2');
+    if (b) b.style.display = 'block';
+    try{ $('#butt2').fadeIn(); }catch(_){}
+  }
+  player.onended = showNext;
+
+  function playCurrent(idx){
+    var item = bank[idx] || {};
+    var src  = item.audio || '';
+    if (src && !/\.mp3$/i.test(src)) src += '.mp3';
+
+    try{ player.pause(); player.currentTime = 0; }catch(_){}
+
+    if (src){
+      player.src = src;
+      var p = player.play();
+      if (p && p.catch) p.catch(function(){ /* iOS قد يحتاج لمسة */ });
+    } else {
+      // لو السؤال بلا صوت
+      showNext();
+    }
+  }
+
+  // 3) ابنِ audioElements مطابقًا لـ promptBank (فهرسًا بفهرس)
+  window.audioElements = bank.map(function(_, i){
+    return {
+      play: function(){ playCurrent(i); },
+      pause: function(){ try{ player.pause(); }catch(_){ } }
+    };
+  });
+
+  // 4) اضمن عدم القفز + تحديث الواجهة دائمًا من نفس bank
+  var oldStart = window.startActivity;
+  window.startActivity = function(){
+    // أظهر الهيدر وأخفِ زر Next لحين انتهاء الصوت
+    var head = document.getElementById('pageHead');
+    var next = document.getElementById('butt2');
+    var imgH = document.getElementById('image_holder');
+    var pic  = document.getElementById('promptPic');
+    var box  = document.getElementById('promptHolder');
+    var pno  = document.getElementById('pno');
+    var pcount = document.getElementById('pCount');
+    var restart = document.getElementById('butt3');
+
+    if (head) head.style.display = 'block';
+    if (next){ next.style.display = 'none'; next.textContent = 'Next'; }
+    if (imgH) imgH.style.display = 'none';
+
+    // زِد العداد بنفس منطقك (counter يبدأ من 0)
+    window.counter = (window.counter|0) + 1;
+
+    if (window.counter > bank.length || bank.length === 0){
+      if (box) box.textContent = 'You have finished.';
+      if (pcount) pcount.style.display = 'none';
+      if (next) next.style.display = 'none';
+      if (restart) restart.style.display = 'inline-block';
+      try{ endBlurb && endBlurb.play && endBlurb.play(); }catch(_){}
+      return;
+    }
+
+    var item = bank[window.counter - 1] || {};
+    if (pcount) pcount.style.display = 'block';
+    if (box) box.textContent = item.text || '';
+    if (pno) pno.textContent = (window.counter + ' / ');
+
+    if (item.image){
+      if (imgH) imgH.style.display = 'block';
+      if (pic) pic.src = item.image;
+    }
+
+    // شغّل الصوت المطابق لهذا السؤال فقط
+    playCurrent(window.counter - 1);
+  };
+
+  // 5) عدّاد إجمالي أعلى يمين + إخفاء overlay
+  var pto = document.getElementById('pto'); if (pto) pto.textContent = String(bank.length);
+  var ov  = document.getElementById('overlay'); if (ov){ ov.style.display='none'; ov.style.pointerEvents='none'; ov.style.zIndex='-1'; }
+
+  // 6) لوج للتشخيص
+  console.log('[fixed mapping] prompts:', bank.map(function(x){return x.audio||'';}));
+})();
+</script>
+  
 </body>
 </html>
