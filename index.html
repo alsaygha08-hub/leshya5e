@@ -201,6 +201,66 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/leshya5e/sw.js').catch(()=>{});
     }
-  </script>
+ </script><script>
+// إلغاء أي shuffle قديم
+window.shuffle = function(a){ return a; };
+
+// مُثبّت: استخدم 12 سؤالًا ثابتة من prompts.js + قناة صوت واحدة بلا تداخل
+(function(){
+  // 12 سؤال ثابتة
+  var promptBank = Array.isArray(window.prompts) ? window.prompts.slice(0,12) : [];
+  window.promptBank = promptBank; // حتى لو كودك الأصلي يعتمد على window.promptBank
+
+  // قناة صوت واحدة (بدل إنشاء أصوات متعددة)
+  var audio = new Audio();
+  audio.preload = 'auto';
+  audio.playsInline = true;
+
+  // لو كودك الأصلي يعتمد على window.sounds/window.audioElements
+  window.sounds = promptBank.map(function(p){
+    if (!p.audio) return "";
+    return p.audio.endsWith('.mp3') ? p.audio : (p.audio + '.mp3');
+  });
+
+  // حوّل audioElements إلى واجهة بسيطة تستدعي القناة الواحدة
+  window.audioElements = window.sounds.map(function(file){
+    return {
+      play: function(){
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+          if (file) {
+            audio.src = file;
+            audio.play().catch(function(){ /* قد يُمنع التشغيل حتى تفاعل المستخدم */ });
+          } else {
+            // سؤال بلا صوت → أظهر زر Next لو كان مخفيًا
+            try { document.getElementById('butt2')?.style && (document.getElementById('butt2').style.display = 'block'); } catch(e){}
+          }
+        } catch(e){}
+      },
+      pause: function(){ try{ audio.pause(); }catch(e){} }
+    };
+  });
+
+  // عند انتهاء الصوت → أظهر زر Next (id: butt2 مستخدم عادةً في صفحتك)
+  audio.onended = function(){
+    try { $('#butt2').fadeIn(); } catch(_){ 
+      var b = document.getElementById('butt2'); if (b) b.style.display = 'block';
+    }
+  };
+
+  // حدّث عداد الإجمالي لو عندك عناصر pno/pto
+  try { if (document.getElementById('pto')) document.getElementById('pto').textContent = promptBank.length; } catch(e){}
+
+  // أخفِ طبقة التحميل (overlay) إن وُجدت
+  try { var ov = document.getElementById('overlay'); if (ov) ov.style.display = 'none'; } catch(e){}
+
+  // عطّل أي تحميل خارجي/عشوائي للبرومبتات
+  window.getPrompts = undefined;
+  // لو فيه دالة processArray(targetFunctions) في كودك، خلها no-op
+  window.processArray = function(){ /* لا شيء—نعتمد على prompts.js الثابت */ };
+})();
+</script>
+
 </body>
 </html>
