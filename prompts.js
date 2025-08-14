@@ -1,4 +1,4 @@
-// prompts.js  (بدون أي <script> tags)
+// prompts.js  (لا تضع وسوم <script>)
 window.prompts = [
   { text:"You are scheduling a meeting. Talk about its duration.",                   audio:"g1.mp3",  image:"1.png"  },
   { text:"You are planning a workshop. Talk about its duration.",                    audio:"g2.mp3",  image:"2.png"  },
